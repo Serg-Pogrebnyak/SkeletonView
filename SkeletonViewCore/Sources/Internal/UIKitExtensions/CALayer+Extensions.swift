@@ -71,15 +71,21 @@ extension CALayer {
     }
     
     func setOpacity(from: Int, to: Int, duration: TimeInterval, completion: (() -> Void)?) {
-        DispatchQueue.main.async { CATransaction.begin() }
-        let animation = CABasicAnimation(keyPath: #keyPath(CALayer.opacity))
-        animation.fromValue = from
-        animation.toValue = to
-        animation.duration = duration
-        animation.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
-        DispatchQueue.main.async { CATransaction.setCompletionBlock(completion) }
-        add(animation, forKey: "setOpacityAnimation")
-        DispatchQueue.main.async { CATransaction.commit() }
+        DispatchQueue.main.async { [weak self] in
+            guard let strongSelf = self else { return }
+            
+            CATransaction.begin()
+            let animation = CABasicAnimation(keyPath: #keyPath(CALayer.opacity))
+            animation.fromValue = from
+            animation.toValue = to
+            animation.duration = duration
+            animation.timingFunction = CAMediaTimingFunction(name: CAMediaTimingFunctionName.easeInEaseOut)
+            animation.fillMode = .forwards
+            animation.isRemovedOnCompletion = false
+            CATransaction.setCompletionBlock(completion)
+            strongSelf.add(animation, forKey: "setOpacityAnimation")
+            CATransaction.commit()
+        }
     }
     
     func insertSkeletonLayer(_ sublayer: SkeletonLayer, atIndex index: UInt32, transition: SkeletonTransitionStyle, completion: (() -> Void)? = nil) {
